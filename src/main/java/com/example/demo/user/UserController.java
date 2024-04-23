@@ -13,6 +13,24 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 
 
+@PostMapping("/register")
+public ResponseEntity<?> registerUser(@RequestBody User newUser) {
+    // Check if user exists
+    if (userRepository.findByEmail(newUser.getEmail()).isPresent()) {
+        return ResponseEntity.badRequest().body("Email already in use!");
+    }
+
+    // Check if passwords match
+    if (!newUser.getPassword().equals(newUser.getPasswordConfirmation())) {
+        return ResponseEntity.badRequest().body("Passwords do not match!");
+    }
+
+    // Save new user
+    newUser.setPassword(passwordEncoder.encode(newUser.getPassword())); // Encoding password
+    newUser = userRepository.save(newUser);
+
+    return ResponseEntity.ok(newUser);
+}
 
 @RestController
 @RequestMapping("/api/users")
