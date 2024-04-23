@@ -1,78 +1,71 @@
 package com.example.demo.user;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-
-@PostMapping("/register")
-public ResponseEntity<?> registerUser(@RequestBody User newUser) {
-    // Check if user exists
-    if (userRepository.findByEmail(newUser.getEmail()).isPresent()) {
-        return ResponseEntity.badRequest().body("Email already in use!");
-    }
-
-    // Check if passwords match
-    if (!newUser.getPassword().equals(newUser.getPasswordConfirmation())) {
-        return ResponseEntity.badRequest().body("Passwords do not match!");
-    }
-
-    // Save new user
-    newUser.setPassword(passwordEncoder.encode(newUser.getPassword())); // Encoding password
-    newUser = userRepository.save(newUser);
-
-    return ResponseEntity.ok(newUser);
-}
 
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
     @Autowired
     private UserRepository userRepository;
-    
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @GetMapping
     public List<User> getUsers() {
         return userRepository.findAll();
     }
-    
+
     @GetMapping("/{id}")
     public User getUserById(@PathVariable Long id) {
         return userRepository.findById(id).orElse(null);
     }
 
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody User newUser) {
+        if (userRepository.findByEmail(newUser.getEmail()).isPresent()) {
+            return ResponseEntity.badRequest().body("Email already in use!");
+        }
+        if (!newUser.getPassword().equals(newUser.getPasswordConfirmation())) {
+            return ResponseEntity.badRequest().body("Passwords do not match!");
+        }
+        newUser.setPassword(passwordEncoder.encode(newUser.getPassword()));
+        newUser = userRepository.save(newUser);
+        return ResponseEntity.ok(newUser);
+    }
+
     @PostMapping
     public User createUser(@RequestBody User user) {
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
     @PutMapping("/{id}")
-    public User updatUser (@PathVariable Long id, @RequestBody User user) {
-        User existingUser = userRepository.findById(id).orElse(null);
-        if (existingUser != null) {
-            existingUser.setName(user.getName());
-            existingUser.setEmail(user.getEmail());
-            return userRepository.save(existingUser);
-        }
-        return null;
+    public User updateUser(@PathVariable Long id, @RequestBody User user) {
+        return userRepository.findById(id)
+            .map(existingUser -> {
+                existingUser.setName(user.getName());
+                existingUser.setEmail(user.getEmail());
+                existingUser.setPassword(passwordEncoder.encode(user.getPassword()));
+                return userRepository.save(existingUser);
+            })
+            .orElseGet(() -> {
+                user.setId(id);
+                return userRepository.save(user);
+            });
     }
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
-        try {
-            userRepository.findById(id).get();
-            userRepository.deleteById(id);
-            return "User deleted successfully";
-        } catch (Exception e) {
-            return "User not found";
-        }
+    public ResponseEntity<?> deleteUser(@PathVariable Long id) {
+        return userRepository.findById(id)
+            .map(user -> {
+                userRepository.delete(user);
+                return ResponseEntity.ok().body("User deleted successfully");
+            })
+            .orElse(ResponseEntity.notFound().build());
     }
-
 }

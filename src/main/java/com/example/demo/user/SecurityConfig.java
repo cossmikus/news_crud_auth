@@ -1,23 +1,25 @@
-package com.example.demo.config;
+package com.example.demo.user;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
+public class SecurityConfig {
 
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf().disable()
-            .authorizeRequests()
-            .antMatchers("/api/users/register", "/api/users/login").permitAll()
-            .anyRequest().authenticated()
-            .and()
-            .httpBasic();
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/users/register", "/api/users/login").permitAll()
+                .anyRequest().authenticated());
+        return http.build();
     }
 
     @Bean
