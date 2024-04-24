@@ -1,12 +1,12 @@
 # Build stage
 FROM maven:3.9.6-eclipse-temurin-17 AS build
-WORKDIR /home/app
-COPY src /home/app/src
-COPY pom.xml /home/app
-RUN mvn -f /home/app/pom.xml clean package -DskipTests
+COPY src /src
+COPY pom.xml /
+WORKDIR /
+RUN mvn clean package -DskipTests
 
 # Package stage
 FROM openjdk:17-jdk
-COPY --from=build /home/app/target/demo-0.0.1-SNAPSHOT.jar /usr/local/lib/app-1.0.0.jar
+COPY --from=build /target/demo-0.0.1-SNAPSHOT.jar /usr/local/lib/app-1.0.0.jar
 EXPOSE 8080
 ENTRYPOINT ["java","-jar","/usr/local/lib/app-1.0.0.jar"]
