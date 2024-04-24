@@ -1,44 +1,30 @@
-# version: '3.9'
-
-# services:
-#   java_app:
-#     build: .
-#     image: java_app
-#     container_name: java_app
-#     ports:
-#       - 8080:8080
-#     depends_on:
-#       - java_db
-#     environment:
-#       SPRING_DATASOURCE_URL: jdbc:postgresql://java_db:5432/postgres
-#       SPRING_DATASOURCE_USERNAME: postgres
-#       SPRING_DATASOURCE_PASSWORD: postgres
-
-#   java_db:
-#     image: postgres:12
-#     container_name: java_db
-#     ports:
-#       - 5432:5432
-#     environment:
-#       POSTGRES_USER: postgres
-#       POSTGRES_PASSWORD: postgres
-#       POSTGRES_DB: postgres
-#     volumes: 
-#       - ./data:/var/lib/postgresql/data
-
 version: '3.9'
 
 services:
-  news_db_rabbit:
+  news_app:
+    container_name: news_app
+    image: king/java_app:1.0.0
+    build: .
+    ports:
+      - 8080:8080
+    environment:
+      - DATABASE_URL=jdbc:postgresql://java_db:5432/postgres
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=postgres
+    depends_on:
+      - news_db
+      
+  news_db:
+    container_name: news_db
     image: postgres:12
-    container_name: news_db_rabbit
     ports:
       - 5432:5432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
-    volumes: 
-      - ./data:/var/lib/postgresql/data
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
 volumes:
-  data: {}
+  pgdata: {}

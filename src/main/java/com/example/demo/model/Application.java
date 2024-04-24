@@ -3,6 +3,7 @@ package com.example.demo.model;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "applications")
@@ -15,12 +16,14 @@ public class Application extends BaseEntity {
     private Integer quantity;
 
     @Column(name = "delivery_address")
+    @JsonProperty("delivery_address")
     private String deliveryAddress;
 
     @Column(name = "phone_number")
+    @JsonProperty("phone_number")
     private String phoneNumber;
 
-    // Getters and setters
+    // Getters and setters using the standard Java naming convention
     public String getProduct() {
         return product;
     }
